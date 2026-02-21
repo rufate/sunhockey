@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Phan's Sunday Hockey</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text: #ffffff;
+            --accent: #ff6b00;
+            --success: #4CAF50;
+            --danger: #ff4444;
+            --warning: #ff9800;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #444;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #3d3d3d;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover { background: #ff8533; }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .admin-panel { display: none; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        th { color: var(--accent); }
+        
+        .goalie-badge {
+            background: #ff6b00;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+        
+        .paid-btn {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            width: auto;
+            background: #444;
+        }
+        .paid-btn.paid { background: var(--success); }
+
+        .remove-btn {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            width: auto;
+            background: var(--danger);
+            margin: 0;
+        }
+
+        .remove-btn:hover { background: #ff6666; }
+
+        .promote-btn {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            width: auto;
+            background: var(--success);
+            margin: 0;
+            margin-right: 5px;
+        }
+
+        .promote-btn:hover {
+            background: #45a049;
+        }
+
+        .control-box {
+            background: linear-gradient(135deg, #2a2a2a, #333);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-box h3 {
+            margin: 0 0 15px 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-input {
+            width: 100px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .control-btn {
+            width: auto;
+            padding: 10px 15px;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .status-display {
+            margin-left: auto;
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .status-display span {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .status-open {
+            color: var(--success) !important;
+        }
+
+        .status-locked {
+            color: var(--danger) !important;
+        }
+
+        .toggle-btn {
+            min-width: 120px;
+        }
+
+        .toggle-btn.locked-state {
+            background: var(--danger);
+        }
+
+        .toggle-btn.open-state {
+            background: var(--success);
+        }
+
+        .schedule-info {
+            background: #1a2a3a;
+            border-left: 4px solid var(--accent);
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .manual-override-warning {
+            background: #3a2a1a;
+            border-left: 4px solid var(--warning);
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #ff9800;
+        }
+
+        .manual-override-warning.active-lock {
+            background: #3a1a1a;
+            border-left-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .restore-btn {
+            background: #666;
+            font-size: 0.8rem;
+            padding: 8px 12px;
+        }
+
+        .details-box {
+            background: linear-gradient(135deg, #1a2a3a, #2a3a4a);
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .details-box h3 {
+            margin: 0 0 15px 0;
+            color: #4a90e2;
+            font-size: 1.1rem;
+        }
+
+        .add-player-form {
+            background: linear-gradient(135deg, #1a3a1a, #2d4d2d);
+            border: 2px solid var(--success);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .add-player-form h3 {
+            margin: 0 0 15px 0;
+            color: var(--success);
+            font-size: 1.1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .add-btn {
+            background: var(--success);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .section-header {
+            color: var(--accent);
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #444;
+        }
+
+        .waitlist-section {
+            background: linear-gradient(135deg, #3a1a1a, #2d1a1a);
+            border: 2px solid #ff4444;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .waitlist-section h3 {
+            margin: 0 0 15px 0;
+            color: #ff6b00;
+            font-size: 1.1rem;
+        }
+
+        .logout-btn {
+            background: #666;
+            width: auto;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            float: right;
+        }
+
+        .roster-status {
+            background: linear-gradient(135deg, #1a3a1a, #2d4d2d);
+            border: 2px solid var(--success);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .roster-status h3 {
+            margin: 0 0 15px 0;
+            color: var(--success);
+            font-size: 1.1rem;
+        }
+
+        .roster-released {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .roster-pending {
+            color: var(--warning);
+            font-weight: bold;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .checkbox-container input {
+            width: auto;
+            margin: 0;
+        }
+
+        .code-display {
+            background: #1a1a1a;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: var(--accent);
+            border: 1px solid #444;
+        }
+
+        .count-box {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .count-label {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .count-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* Pre-defined Goalies Section */
+        .goalies-section {
+            background: linear-gradient(135deg, #1a3a3a, #2d4d4d);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .goalies-section h3 {
+            margin: 0 0 15px 0;
+            color: #4CAF50;
+            font-size: 1.1rem;
+        }
+
+        .goalie-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .goalie-item {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .goalie-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .goalie-checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: white;
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .goalie-checkbox-wrapper input[type="checkbox"]:checked {
+            background: #4CAF50;
+        }
+
+        .goalie-checkbox-wrapper input[type="checkbox"]:checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .goalie-checkbox-wrapper label {
+            cursor: pointer;
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .goalie-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 30px;
+        }
+
+        .goalie-rating label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .goalie-rating input {
+            width: 60px;
+            margin: 0;
+        }
+
+        .add-goalies-btn {
+            width: 100%;
+            margin-top: 15px;
+            background: #4CAF50;
+        }
+
+        .add-goalies-btn:hover {
+            background: #45a049;
+        }
+
+        /* Released Roster Preview */
+        .released-roster-preview {
+            background: linear-gradient(135deg, #1a3a1a, #2d4d2d);
+            border: 3px solid var(--success);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .released-roster-preview.active {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-header {
+            text-align: center;
+            color: var(--success);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--success);
+        }
+
+        .preview-teams {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .preview-team {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid;
+        }
+
+        .preview-team.white { border-color: #ffffff; }
+        .preview-team.dark { border-color: #666666; }
+
+        .preview-team h4 {
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .preview-team.white h4 { color: #ffffff; }
+        .preview-team.dark h4 { color: #888888; }
+
+        .preview-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .preview-list li {
+            padding: 5px;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .success-message {
+            background: var(--success);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .success-message.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        .error-message {
+            background: var(--danger);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* History Management Section */
+        .history-delete-box {
+            background: linear-gradient(135deg, #3a1a1a, #4d2d2d);
+            border: 2px solid #ff4444;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .history-delete-box h3 {
+            margin: 0 0 15px 0;
+            color: #ff4444;
+            font-size: 1.1rem;
+        }
+
+        .history-select {
+            background: #3d3d3d;
+            border: 1px solid #555;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1rem;
+            flex: 1;
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #ff6666;
+        }
+
+        .delete-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .delete-result.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+            display: block;
+        }
+
+        .delete-result.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            th, td { padding: 8px; font-size: 0.8rem; }
+            .control-row { flex-direction: column; align-items: stretch; }
+            .form-row { grid-template-columns: 1fr; }
+            .preview-teams { grid-template-columns: 1fr; }
+            .goalie-list { grid-template-columns: 1fr; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <div class="container" id="loginBox">
+        <h1>Admin Portal</h1>
+        <p style="text-align:center; color:#888;">Phan's Sunday Hockey</p>
+        <input type="password" id="adminPass" placeholder="Enter Admin Password">
+        <button onclick="login()" style="width:100%;">Access Dashboard</button>
+        <p id="errorMsg" style="color:#ff4444; text-align:center; display:none;">Wrong Password</p>
+    </div>
+
+    <div class="container admin-panel" id="adminPanel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1 style="margin:0;">Admin Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="success-message" id="releaseSuccess">
+            ✅ Roster Released Successfully! Players can now see the teams.
+        </div>
+
+        <div class="error-message" id="releaseError">
+            ❌ Error releasing roster. Check console for details.
+        </div>
+
+        <div class="details-box">
+            <h3>📍 Game Details</h3>
+            <div class="control-row">
+                <input type="text" id="locationInput" placeholder="Location" style="flex:1;">
+                <input type="text" id="timeInput" placeholder="Time" style="flex:1;">
+            </div>
+            <div class="control-row" style="margin-top:10px;">
+                <input type="date" id="dateInput" style="flex:1;">
+                <button class="control-btn" onclick="updateDetails()">Update All</button>
+            </div>
+            <div class="status-display" style="margin-top:10px; margin-left:0;">
+                <span id="currentDateDisplay">--</span> | <span id="currentLocation">--</span> | <span id="currentTime">--</span>
+            </div>
+        </div>
+
+        <div class="control-box">
+            <h3>🔧 Player Spots</h3>
+            <div class="control-row">
+                <input type="number" id="playerSpotInput" class="control-input" min="0" max="30" value="20">
+                <button class="control-btn" onclick="updatePlayerSpots()">Update</button>
+                <div class="status-display">
+                    <div class="count-box">
+                        <div class="count-label">Player Spots</div>
+                        <div class="count-value" id="currentPlayerSpotsDisplay">20</div>
+                    </div>
+                    <div class="count-box">
+                        <div class="count-label">Players</div>
+                        <div class="count-value" id="currentPlayerCount">0</div>
+                    </div>
+                    <div class="count-box">
+                        <div class="count-label">Goalies</div>
+                        <div class="count-value" id="currentGoalieCount" style="color:#4CAF50;">0/2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-box">
+            <h3>🔒 Signup Code Control</h3>
+            <div class="control-row" style="margin-bottom: 15px;">
+                <div class="code-display" id="currentCodeDisplay">----</div>
+                <button class="control-btn" onclick="toggleCode()" id="toggleCodeBtn">...</button>
+                <button class="control-btn restore-btn" id="restoreBtn" onclick="restoreSchedule()" style="display:none;">Restore Auto</button>
+            </div>
+            <div class="control-row">
+                <input type="text" id="codeInput" class="control-input" maxlength="4" placeholder="New 4-digit code" style="width:120px;">
+                <button class="control-btn" onclick="updateCode()" style="background: #4a90e2;">Change Code</button>
+                <button class="control-btn" onclick="generateNewCode()" style="background: #ff6b00;">🎲 Generate New</button>
+                <div class="status-display">
+                    Status: <span id="codeStatusDisplay">...</span>
+                </div>
+            </div>
+            <div class="schedule-info">
+    <strong>📅 Auto Schedule (SUNDAY HOCKEY):</strong><br>
+    🔒 <strong>LOCKED:</strong> Monday 12:00 AM → Wednesday 6:00 PM ET<br>
+    ✅ <strong>OPEN:</strong> Wednesday 6:00 PM → Sunday 12:00 PM ET<br><br>
+    <strong>🔄 Weekly Reset:</strong> Every Monday 12:00 AM ET (Code NOT auto-generated - keeps existing code)
+</div>
+            <div class="manual-override-warning" id="overrideWarning" style="display:none;">
+                <strong>⚠️ Manual Override Active</strong>
+                <div id="overrideDetails"></div>
+            </div>
+        </div>
+
+        <div class="roster-status">
+            <h3>📋 Team Roster Status</h3>
+            <div class="control-row">
+                <div class="status-display" style="margin-left:0;">
+                    Status: <span id="rosterStatusDisplay" class="roster-pending">Pending</span>
+                </div>
+                <button class="control-btn" onclick="releaseRoster()" id="releaseRosterBtn" style="background: var(--success);">Release Roster Now</button>
+                <button class="control-btn" onclick="manualReset()" style="background: var(--danger);">Reset Week</button>
+            </div>
+            <div style="margin-top:10px; font-size: 0.85rem; color: #aaa;">
+                Click "Release Roster Now" to generate teams and make them visible to all players instantly.
+            </div>
+        </div>
+
+        <!-- Released Roster Preview -->
+        <div class="released-roster-preview" id="releasedRosterPreview">
+            <div class="preview-header">
+                <h3>🏒 Released Roster</h3>
+                <p id="previewGameInfo">--</p>
+            </div>
+            <div class="preview-teams">
+                <div class="preview-team white">
+                    <h4>Team White <span id="whiteAvgPreview"></span></h4>
+                    <ul class="preview-list" id="whiteTeamPreview"></ul>
+                </div>
+                <div class="preview-team dark">
+                    <h4>Team Dark <span id="darkAvgPreview"></span></h4>
+                    <ul class="preview-list" id="darkTeamPreview"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-box">
+            <h3>📚 History</h3>
+            <div class="control-row">
+                <button class="control-btn" onclick="window.open('/history', '_blank')" style="background: #4a90e2;">
+                    View Roster History
+                </button>
+                <div class="status-display">
+                    Past weeks are automatically archived
+                </div>
+            </div>
+        </div>
+
+        <!-- History Management Section - DELETE OLD ROSTERS -->
+        <div class="history-delete-box">
+            <h3>🗑️ Delete Old History</h3>
+            <div class="control-row" style="margin-bottom: 10px;">
+                <select id="historySelect" class="history-select">
+                    <option value="">-- Select a week to delete --</option>
+                </select>
+                <button class="control-btn" onclick="loadHistoryList()" style="background: #4a90e2; margin-left: 10px;">
+                    🔄 Refresh
+                </button>
+            </div>
+            <button class="delete-btn" onclick="deleteSelectedHistory()">
+                ❌ Delete Selected Week from History
+            </button>
+            <div id="deleteResult" class="delete-result"></div>
+        </div>
+
+        <!-- Pre-defined Goalies Section - YOUR GOALIES -->
+        <div class="goalies-section">
+            <h3>🥅 Quick Add Goalies (Max 2)</h3>
+            <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px;">
+                Check the box to add a goalie. Ratings are pre-set but editable. Click "Add Selected Goalies" to add them to the roster.
+            </p>
+            <div class="goalie-list" id="predefinedGoalies">
+                <div class="goalie-item">
+                    <div class="goalie-checkbox-wrapper">
+                        <input type="checkbox" id="goalie1" value="Hao Chau">
+                        <label for="goalie1">Hao Chau</label>
+                    </div>
+                    <div class="goalie-rating">
+                        <label>Rating:</label>
+                        <input type="number" id="goalie1Rating" min="1" max="10" value="8" placeholder="1-10">
+                    </div>
+                </div>
+                <div class="goalie-item">
+                    <div class="goalie-checkbox-wrapper">
+                        <input type="checkbox" id="goalie2" value="Craig Skolak">
+                        <label for="goalie2">Craig Skolak</label>
+                    </div>
+                    <div class="goalie-rating">
+                        <label>Rating:</label>
+                        <input type="number" id="goalie2Rating" min="1" max="10" value="9" placeholder="1-10">
+                    </div>
+                </div>
+                <div class="goalie-item">
+                    <div class="goalie-checkbox-wrapper">
+                        <input type="checkbox" id="goalie3" value="Mat Carriere">
+                        <label for="goalie3">Mat Carriere</label>
+                    </div>
+                    <div class="goalie-rating">
+                        <label>Rating:</label>
+                        <input type="number" id="goalie3Rating" min="1" max="10" value="7" placeholder="1-10">
+                    </div>
+                </div>
+                <div class="goalie-item">
+                    <div class="goalie-checkbox-wrapper">
+                        <input type="checkbox" id="goalie4" value="Kent Nelson">
+                        <label for="goalie4">Kent Nelson</label>
+                    </div>
+                    <div class="goalie-rating">
+                        <label>Rating:</label>
+                        <input type="number" id="goalie4Rating" min="1" max="10" value="7" placeholder="1-10">
+                    </div>
+                </div>
+                <div class="goalie-item">
+                    <div class="goalie-checkbox-wrapper">
+                        <input type="checkbox" id="goalie5" value="Jesse Laframboise">
+                        <label for="goalie5">Jesse Laframboise</label>
+                    </div>
+                    <div class="goalie-rating">
+                        <label>Rating:</label>
+                        <input type="number" id="goalie5Rating" min="1" max="10" value="6" placeholder="1-10">
+                    </div>
+                </div>
+            </div>
+            <button class="add-goalies-btn" onclick="addSelectedGoalies()">➕ Add Selected Goalies</button>
+        </div>
+
+        <div class="add-player-form">
+            <h3>➕ Add Player Manually</h3>
+            <div class="form-row">
+                <input type="text" id="newFirstName" placeholder="First Name">
+                <input type="text" id="newLastName" placeholder="Last Name">
+            </div>
+            <input type="tel" id="newPhone" placeholder="Phone Number">
+            <div class="form-row">
+                <input type="number" id="newRating" placeholder="Rating (1-10)" min="1" max="10">
+                <select id="newPayment">
+    <option value="Cash">Cash</option>
+    <option value="E-Transfer">E-Transfer</option>
+    <option value="PIA">PIA (Pay In Advance)</option>
+</select>
+            </div>
+            <label style="display:flex; align-items:center; gap:10px; margin:10px 0; color:#aaa;">
+                <input type="checkbox" id="addToWaitlist" style="width:auto;">
+                Add to Waitlist
+            </label>
+            <button class="add-btn" onclick="addPlayer()">Add Player</button>
+        </div>
+
+        <h3 class="section-header">🏒 Registered Players (<span id="playerCount">0</span> Players, <span id="goalieCountDisplay">0</span> Goalies)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Rating</th>
+                    <th>Payment</th>
+                    <th>Paid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="playerList"></tbody>
+        </table>
+
+        <div class="waitlist-section">
+            <h3>⏳ Waitlist (<span id="waitlistCount">0</span>)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Rating</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="waitlistList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        const SESSION_KEY = 'hockey_admin_session';
+        let sessionToken = localStorage.getItem(SESSION_KEY) || "";
+        let maxGoalies = 2;
+        let currentGoalies = 0;
+        let playersCount = 0;
+
+        // Pre-defined goalie data - YOUR GOALIES
+        const PREDEFINED_GOALIES = [
+            { id: 'goalie1', name: 'Hao Chau', phone: '(519) 995-9884', defaultRating: 8 },
+            { id: 'goalie2', name: 'Craig Skolak', phone: '(519) 982-6311', defaultRating: 9 },
+            { id: 'goalie3', name: 'Mat Carriere', phone: '(226) 350-0217', defaultRating: 7 },
+            { id: 'goalie4', name: 'Kent Nelson', phone: '(250) 884-6609', defaultRating: 7 },
+            { id: 'goalie5', name: 'Jesse Laframboise', phone: '(519) 566-6711', defaultRating: 6 }
+        ];
+
+        async function checkSession() {
+            if (!sessionToken) {
+                showLogin();
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/api/admin/check-session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                const data = await res.json();
+                if (data.loggedIn) {
+                    showDashboard();
+                    loadData();
+                    loadSettings();
+                    // Load history list after login
+                    setTimeout(loadHistoryList, 500);
+                } else {
+                    localStorage.removeItem(SESSION_KEY);
+                    sessionToken = "";
+                    showLogin();
+                }
+            } catch (err) {
+                console.error("Session check error:", err);
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginBox').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+        }
+
+        async function login() {
+            try {
+                const pass = document.getElementById('adminPass').value;
+                const res = await fetch(`${API_URL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    sessionToken = data.sessionToken;
+                    localStorage.setItem(SESSION_KEY, sessionToken);
+                    showDashboard();
+                    loadData();
+                    loadSettings();
+                    // Load history list after login
+                    setTimeout(loadHistoryList, 500);
+                } else {
+                    document.getElementById('errorMsg').style.display = 'block';
+                }
+            } catch (err) {
+                console.error("Login error:", err);
+                alert("Login failed. Check console.");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem(SESSION_KEY);
+            sessionToken = "";
+            showLogin();
+        }
+
+        document.getElementById('adminPass').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+
+        // Add selected predefined goalies
+        async function addSelectedGoalies() {
+            const selectedGoalies = [];
+            
+            PREDEFINED_GOALIES.forEach(goalie => {
+                const checkbox = document.getElementById(goalie.id);
+                if (checkbox && checkbox.checked) {
+                    const ratingInput = document.getElementById(goalie.id + 'Rating');
+                    const rating = parseInt(ratingInput.value) || goalie.defaultRating;
+                    selectedGoalies.push({
+                        ...goalie,
+                        rating: rating
+                    });
+                }
+            });
+
+            if (selectedGoalies.length === 0) {
+                alert("Please select at least one goalie to add.");
+                return;
+            }
+
+            if (selectedGoalies.length > maxGoalies) {
+                alert(`You can only add up to ${maxGoalies} goalies. Please uncheck some goalies.`);
+                return;
+            }
+
+            // Check current goalie count
+            if (currentGoalies + selectedGoalies.length > maxGoalies) {
+                alert(`Only ${maxGoalies - currentGoalies} goalie spot(s) remaining. Please uncheck some goalies.`);
+                return;
+            }
+
+            let addedCount = 0;
+            let errors = [];
+
+            for (const goalie of selectedGoalies) {
+                try {
+                    const res = await fetch(`${API_URL}/api/admin/add-player`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            sessionToken: sessionToken, 
+                            firstName: goalie.name.split(' ')[0], 
+                            lastName: goalie.name.split(' ').slice(1).join(' '), 
+                            phone: goalie.phone, 
+                            rating: goalie.rating,
+                            paymentMethod: 'N/A', 
+                            isGoalie: true,
+                            toWaitlist: false 
+                        })
+                    });
+
+                    if (res.ok) {
+                        addedCount++;
+                    } else {
+                        const err = await res.json();
+                        errors.push(`${goalie.name}: ${err.error}`);
+                    }
+                } catch (err) {
+                    console.error("Add goalie error:", err);
+                    errors.push(`${goalie.name}: Network error`);
+                }
+            }
+
+            // Uncheck all boxes after adding
+            PREDEFINED_GOALIES.forEach(goalie => {
+                const checkbox = document.getElementById(goalie.id);
+                if (checkbox) checkbox.checked = false;
+            });
+
+            // Reload data to show updated list
+            loadData();
+
+            // Show result message
+            if (addedCount > 0) {
+                alert(`✅ Successfully added ${addedCount} goalie(s)!\\n${errors.length > 0 ? '\\nErrors:\\n' + errors.join('\\n') : ''}`);
+            } else {
+                alert(`❌ Failed to add goalies:\\n${errors.join('\\n')}`);
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                if (!res.ok) {
+                    console.error("Settings load failed:", res.status);
+                    return;
+                }
+                const data = await res.json();
+                
+                document.getElementById('currentLocation').innerText = data.location;
+                document.getElementById('currentTime').innerText = data.time;
+                document.getElementById('currentDateDisplay').innerText = data.date || '--';
+                document.getElementById('locationInput').value = data.location;
+                document.getElementById('timeInput').value = data.time;
+                document.getElementById('dateInput').value = data.date || '';
+                document.getElementById('currentCodeDisplay').innerText = data.code;
+                document.getElementById('codeInput').value = '';
+                
+                const statusSpan = document.getElementById('codeStatusDisplay');
+                const toggleBtn = document.getElementById('toggleCodeBtn');
+                
+                if (data.requireCode) {
+                    statusSpan.innerText = "LOCKED (Code Required)";
+                    statusSpan.className = "status-locked";
+                    toggleBtn.innerText = "Unlock Signup";
+                    toggleBtn.className = "control-btn toggle-btn locked-state";
+                } else {
+                    statusSpan.innerText = "OPEN (No Code)";
+                    statusSpan.className = "status-open";
+                    toggleBtn.innerText = "Lock Signup";
+                    toggleBtn.className = "control-btn toggle-btn open-state";
+                }
+
+                // FIXED: Enhanced manual override warning with lock window status
+                const overrideWarning = document.getElementById('overrideWarning');
+                const restoreBtn = document.getElementById('restoreBtn');
+                const overrideDetails = document.getElementById('overrideDetails');
+                
+                if (data.manualOverride) {
+                    overrideWarning.style.display = 'block';
+                    restoreBtn.style.display = 'inline-block';
+                    
+                    // Show additional warning if we're in locked window but override is active
+                    if (data.isLockedWindow) {
+                        overrideWarning.classList.add('active-lock');
+                        overrideDetails.innerHTML = `
+                            <div style="margin-top:8px; font-size:0.8rem; color:#ff4444;">
+                                <strong>⚠️ CRITICAL:</strong> Signup should be LOCKED right now (Mon-Wed 6pm ET)!<br>
+                                Auto-schedule is disabled. Players can signup without code!
+                            </div>
+                        `;
+                    } else {
+                        overrideWarning.classList.remove('active-lock');
+                        overrideDetails.innerHTML = '';
+                    }
+                } else {
+                    overrideWarning.style.display = 'none';
+                    restoreBtn.style.display = 'none';
+                    overrideDetails.innerHTML = '';
+                }
+
+                const rosterStatus = document.getElementById('rosterStatusDisplay');
+                if (data.rosterReleased) {
+                    rosterStatus.innerText = "RELEASED";
+                    rosterStatus.className = "roster-released";
+                    document.getElementById('releaseRosterBtn').disabled = true;
+                    document.getElementById('releaseRosterBtn').innerText = "Roster Already Released";
+                    // Load and show the released roster preview
+                    loadReleasedRosterPreview();
+                } else {
+                    rosterStatus.innerText = "PENDING";
+                    rosterStatus.className = "roster-pending";
+                    document.getElementById('releaseRosterBtn').disabled = false;
+                    document.getElementById('releaseRosterBtn').innerText = "Release Roster Now";
+                    document.getElementById('releasedRosterPreview').classList.remove('active');
+                }
+            } catch (err) {
+                console.error("Error loading settings:", err);
+            }
+        }
+
+        async function loadReleasedRosterPreview() {
+            try {
+                const res = await fetch(`${API_URL}/api/roster`);
+                const data = await res.json();
+                
+                if (!data.released) return;
+                
+                document.getElementById('previewGameInfo').innerText = 
+                    `${data.formattedDate || data.date} | ${data.location} | ${data.time}`;
+                
+                document.getElementById('whiteAvgPreview').innerText = `(Avg: ${data.whiteRating || '--'})`;
+                document.getElementById('darkAvgPreview').innerText = `(Avg: ${data.darkRating || '--'})`;
+                
+                // White Team
+                const whiteList = document.getElementById('whiteTeamPreview');
+                whiteList.innerHTML = '';
+                if (data.whiteTeam && Array.isArray(data.whiteTeam)) {
+                    data.whiteTeam.forEach(player => {
+                        const li = document.createElement('li');
+                        const goalieTag = player.isGoalie ? ' (G)' : '';
+                        li.innerHTML = `
+                            <span>${player.firstName} ${player.lastName}${goalieTag}</span>
+                            <span>${player.rating}/10</span>
+                        `;
+                        whiteList.appendChild(li);
+                    });
+                }
+                
+                // Dark Team
+                const darkList = document.getElementById('darkTeamPreview');
+                darkList.innerHTML = '';
+                if (data.darkTeam && Array.isArray(data.darkTeam)) {
+                    data.darkTeam.forEach(player => {
+                        const li = document.createElement('li');
+                        const goalieTag = player.isGoalie ? ' (G)' : '';
+                        li.innerHTML = `
+                            <span>${player.firstName} ${player.lastName}${goalieTag}</span>
+                            <span>${player.rating}/10</span>
+                        `;
+                        darkList.appendChild(li);
+                    });
+                }
+                
+                document.getElementById('releasedRosterPreview').classList.add('active');
+            } catch (err) {
+                console.error("Error loading roster preview:", err);
+            }
+        }
+
+        async function updateDetails() {
+            try {
+                const location = document.getElementById('locationInput').value;
+                const time = document.getElementById('timeInput').value;
+                const date = document.getElementById('dateInput').value;
+                const res = await fetch(`${API_URL}/api/admin/update-details`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, location: location, time: time, date: date })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('currentLocation').innerText = data.location;
+                    document.getElementById('currentTime').innerText = data.time;
+                    document.getElementById('currentDateDisplay').innerText = data.formattedDate || data.date;
+                    alert("Game details updated!");
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Update details error:", err);
+            }
+        }
+
+        function generateRandomCode() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        async function generateNewCode() {
+            const newCode = generateRandomCode();
+            document.getElementById('codeInput').value = newCode;
+            await updateCode();
+        }
+
+        async function updateCode() {
+            try {
+                const newCode = document.getElementById('codeInput').value.trim();
+                
+                if (!newCode || !/^\\d{4}$/.test(newCode)) {
+                    alert("Please enter a valid 4-digit code (numbers only)");
+                    return;
+                }
+                
+                const res = await fetch(`${API_URL}/api/admin/update-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, newCode: newCode })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('currentCodeDisplay').innerText = data.code;
+                    document.getElementById('codeInput').value = '';
+                    alert("Code updated successfully to: " + data.code);
+                } else if (res.status === 401) {
+                    alert("Session expired. Please login again.");
+                    logout();
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + (err.error || "Failed to update code"));
+                }
+            } catch (err) {
+                console.error("Update code error:", err);
+            }
+        }
+
+        async function toggleCode() {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/toggle-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                if (res.ok) {
+                    loadSettings();
+                    const data = await res.json();
+                    alert(data.requireCode ? "Signup is now LOCKED (code required)" : "Signup is now OPEN (no code needed)");
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Toggle code error:", err);
+            }
+        }
+
+        async function restoreSchedule() {
+            if (!confirm("Restore auto-schedule? This will allow the system to automatically lock/unlock based on the schedule (Mon 12am - Wed 6pm ET).")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/reset-schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                if (res.ok) {
+                    loadSettings();
+                    alert("Auto-schedule restored! Signup will now automatically lock during Mon 12am - Wed 6pm ET.");
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Restore schedule error:", err);
+            }
+        }
+
+        async function releaseRoster() {
+            console.log("Release roster clicked");
+            console.log("Session token:", sessionToken ? "Present" : "Missing");
+            
+            // Get fresh data first to ensure we have current player count
+            await loadData();
+            
+            if (playersCount === 0) {
+                alert("No players registered yet!");
+                return;
+            }
+            
+            if (!confirm("Release roster now? This will generate balanced teams and make them visible to ALL players instantly.")) return;
+            
+            const btn = document.getElementById('releaseRosterBtn');
+            btn.disabled = true;
+            btn.innerText = "Releasing...";
+            
+            // Hide any previous messages
+            document.getElementById('releaseSuccess').classList.remove('active');
+            document.getElementById('releaseError').classList.remove('active');
+            
+            try {
+                console.log("Sending release roster request...");
+                const res = await fetch(`${API_URL}/api/admin/release-roster`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                
+                console.log("Response status:", res.status);
+                
+                let data;
+                try {
+                    data = await res.json();
+                } catch (jsonErr) {
+                    console.error("Failed to parse JSON response:", jsonErr);
+                    const text = await res.text();
+                    console.log("Raw response:", text);
+                    throw new Error("Invalid JSON response from server");
+                }
+                
+                console.log("Response data:", data);
+                
+                if (res.ok && data.success) {
+                    // Show success message
+                    const successMsg = document.getElementById('releaseSuccess');
+                    successMsg.classList.add('active');
+                    setTimeout(() => successMsg.classList.remove('active'), 5000);
+                    
+                    // Update UI
+                    document.getElementById('rosterStatusDisplay').innerText = "RELEASED";
+                    document.getElementById('rosterStatusDisplay').className = "roster-released";
+                    btn.innerText = "Roster Already Released";
+                    
+                    // Show the roster preview immediately
+                    await loadReleasedRosterPreview();
+                    
+                    alert(`✅ Roster Released Successfully!\\n\\nWhite Team: ${data.whiteTeam.length} players (Avg: ${data.whiteRating})\\nDark Team: ${data.darkTeam.length} players (Avg: ${data.darkRating})\\n\\nSignup is now LOCKED. Players can see the teams on the signup page!`);
+                } else {
+                    console.error("Server returned error:", data);
+                    document.getElementById('releaseError').classList.add('active');
+                    document.getElementById('releaseError').innerText = "❌ " + (data.error || "Unknown error");
+                    btn.disabled = false;
+                    btn.innerText = "Release Roster Now";
+                    alert("Error: " + (data.error || "Failed to release roster"));
+                }
+            } catch (err) {
+                console.error("Error in releaseRoster:", err);
+                document.getElementById('releaseError').classList.add('active');
+                document.getElementById('releaseError').innerText = "❌ " + err.message;
+                btn.disabled = false;
+                btn.innerText = "Release Roster Now";
+                alert("Error releasing roster: " + err.message + "\\n\\nCheck browser console (F12) for details.");
+            }
+        }
+
+        async function manualReset() {
+            if (!confirm("⚠️ WARNING: This will reset ALL data for a new week and generate a NEW signup code. Continue?")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/manual-reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    alert("Week reset complete!\\nNew signup code: " + data.newCode);
+                    loadData();
+                    loadSettings();
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Manual reset error:", err);
+            }
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/players`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                if (!res.ok) {
+                    if (res.status === 401) logout();
+                    return;
+                }
+                const data = await res.json();
+
+                playersCount = data.players.length;
+                maxGoalies = data.maxGoalies || 2;
+                currentGoalies = data.goalieCount;
+                
+                // Update counts
+                document.getElementById('currentPlayerSpotsDisplay').innerText = data.playerSpots;
+                document.getElementById('playerSpotInput').value = data.playerSpots;
+                document.getElementById('currentPlayerCount').innerText = data.playerCount;
+                
+                const goalieDisplay = document.getElementById('currentGoalieCount');
+                goalieDisplay.innerText = `${data.goalieCount}/${maxGoalies}`;
+                goalieDisplay.className = 'count-value ' + (data.goalieCount >= maxGoalies ? 'goalie-full' : '');
+                
+                document.getElementById('playerCount').innerText = data.playerCount;
+                document.getElementById('goalieCountDisplay').innerText = data.goalieCount;
+                document.getElementById('waitlistCount').innerText = data.waitlist.length;
+                
+                if (data.playerSignupCode) {
+                    document.getElementById('currentCodeDisplay').innerText = data.playerSignupCode;
+                }
+                
+                const tbody = document.getElementById('playerList');
+                tbody.innerHTML = '';
+                if (data.players.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#666; padding:30px;">No players registered</td></tr>';
+                } else {
+                    data.players.forEach(p => {
+                        const tr = document.createElement('tr');
+                        const goalieBadge = p.isGoalie ? '<span class="goalie-badge">GOALIE</span>' : '';
+                        const paidDisplay = p.isGoalie ? 'FREE' : (p.paid ? 'PAID' : 'NO');
+                        const paidClass = p.isGoalie ? 'paid' : (p.paid ? 'paid' : '');
+                        tr.innerHTML = `
+                            <td>${p.firstName} ${p.lastName} ${goalieBadge}</td>
+                            <td>${p.phone}</td>
+                            <td>${p.rating}/10</td>
+                            <td>${p.isGoalie ? 'N/A' : p.paymentMethod}</td>
+                            <td>
+                                <button class="paid-btn ${paidClass}" onclick="togglePaid(${p.id})" ${p.isGoalie ? 'disabled' : ''}>
+                                    ${paidDisplay}
+                                </button>
+                            </td>
+                            <td>
+                                <button class="remove-btn" onclick="removePlayer(${p.id})">Remove</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                const waitlistBody = document.getElementById('waitlistList');
+                waitlistBody.innerHTML = '';
+                if (data.waitlist.length === 0) {
+                    waitlistBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#666; padding:30px;">No one on waitlist</td></tr>';
+                } else {
+                    data.waitlist.forEach((p, index) => {
+                        const tr = document.createElement('tr');
+                        const goalieBadge = p.isGoalie ? '<span class="goalie-badge">GOALIE</span>' : '';
+                        tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${p.firstName} ${p.lastName} ${goalieBadge}</td>
+                            <td>${p.phone}</td>
+                            <td>${p.rating}/10</td>
+                            <td>
+                                <button class="promote-btn" data-player-id="${p.id}">Promote</button>
+                                <button class="remove-btn" onclick="removeWaitlist(${p.id})">Remove</button>
+                            </td>
+                        `;
+                        waitlistBody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error("Load data error:", err);
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('promote-btn')) {
+                const playerId = parseInt(e.target.getAttribute('data-player-id'));
+                promotePlayer(playerId);
+            }
+        });
+
+        async function promotePlayer(id) {
+            const spotsDisplay = document.getElementById('currentPlayerSpotsDisplay').innerText;
+            const spots = parseInt(spotsDisplay);
+            
+            let confirmMsg = "Promote this player from waitlist to game?";
+            if (spots <= 0) {
+                confirmMsg = "⚠️ ADMIN OVERRIDE\\n\\nPlayer spots are currently 0.\\nPromote player anyway?";
+            }
+            
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/promote-waitlist`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, waitlistId: id })
+                });
+
+                if (res.status === 401) {
+                    logout();
+                    return;
+                }
+
+                if (res.ok) {
+                    const data = await res.json();
+                    let message = `✅ Player promoted!`;
+                    if (data.override) {
+                        message += '\\n\\n(Admin override - spots were at 0)';
+                    }
+                    alert(message);
+                    loadData();
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + err.error);
+                }
+            } catch (err) {
+                console.error("Promote player error:", err);
+                alert("Error promoting player");
+            }
+        }
+
+        async function removePlayer(id) {
+            if (!confirm("Remove this player?")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/remove-player`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, playerId: id })
+                });
+                if (res.ok) {
+                    loadData();
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Remove player error:", err);
+            }
+        }
+
+        async function removeWaitlist(id) {
+            if (!confirm("Remove from waitlist?")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/remove-waitlist`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, waitlistId: id })
+                });
+                if (res.ok) {
+                    loadData();
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Remove waitlist error:", err);
+            }
+        }
+
+        async function togglePaid(id) {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/toggle-paid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, playerId: id })
+                });
+                if (res.ok) {
+                    loadData();
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Toggle paid error:", err);
+            }
+        }
+
+        async function updatePlayerSpots() {
+            try {
+                const newSpots = document.getElementById('playerSpotInput').value;
+                const res = await fetch(`${API_URL}/api/admin/update-spots`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, newSpots: newSpots })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('currentPlayerSpotsDisplay').innerText = data.spots;
+                    alert("Player spots updated to: " + data.spots);
+                } else if (res.status === 401) {
+                    logout();
+                }
+            } catch (err) {
+                console.error("Update spots error:", err);
+            }
+        }
+
+        async function addPlayer() {
+            const firstName = document.getElementById('newFirstName').value;
+            const lastName = document.getElementById('newLastName').value;
+            const phone = document.getElementById('newPhone').value;
+            const rating = document.getElementById('newRating').value;
+            const paymentMethod = document.getElementById('newPayment').value;
+            const toWaitlist = document.getElementById('addToWaitlist').checked;
+
+            if (!firstName || !lastName || !phone || !rating) {
+                alert("Please fill in all required fields");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/add-player`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        sessionToken: sessionToken, 
+                        firstName, 
+                        lastName, 
+                        phone, 
+                        rating,
+                        paymentMethod, 
+                        isGoalie: false,
+                        toWaitlist 
+                    })
+                });
+                
+                if (res.ok) {
+                    document.getElementById('newFirstName').value = '';
+                    document.getElementById('newLastName').value = '';
+                    document.getElementById('newPhone').value = '';
+                    document.getElementById('newRating').value = '';
+                    document.getElementById('addToWaitlist').checked = false;
+                    loadData();
+                } else if (res.status === 401) {
+                    logout();
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + err.error);
+                }
+            } catch (err) {
+                console.error("Add player error:", err);
+            }
+        }
+
+        // --- HISTORY MANAGEMENT FUNCTIONS ---
+        
+        async function loadHistoryList() {
+            const select = document.getElementById('historySelect');
+            const resultDiv = document.getElementById('deleteResult');
+            
+            try {
+                const res = await fetch(`${API_URL}/api/history`);
+                const data = await res.json();
+                
+                select.innerHTML = '<option value="">-- Select a week to delete --</option>';
+                
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(week => {
+                        const option = document.createElement('option');
+                        option.value = `${week.year}-${week.weekNumber}`;
+                        const date = new Date(week.created);
+                        option.text = `Week ${week.weekNumber}, ${week.year} (${date.toLocaleDateString()})`;
+                        select.appendChild(option);
+                    });
+                    resultDiv.className = 'delete-result success';
+                    resultDiv.innerHTML = `✅ Loaded ${data.history.length} weeks from history`;
+                } else {
+                    select.innerHTML = '<option value="">No history available</option>';
+                    resultDiv.className = 'delete-result error';
+                    resultDiv.innerHTML = '⚠️ No history found';
+                }
+                
+            } catch (err) {
+                console.error("Error loading history list:", err);
+                resultDiv.className = 'delete-result error';
+                resultDiv.innerHTML = '❌ Error loading history';
+            }
+        }
+        
+        async function deleteSelectedHistory() {
+            const select = document.getElementById('historySelect');
+            const resultDiv = document.getElementById('deleteResult');
+            const value = select.value;
+            
+            if (!value) {
+                alert("Please select a week to delete");
+                return;
+            }
+            
+            const [year, week] = value.split('-');
+            
+            if (!confirm(`⚠️ WARNING: This will permanently delete Week ${week}, ${year} from history.\n\nThis action cannot be undone!\n\nContinue?`)) {
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/api/admin/history/${year}/${week}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    resultDiv.className = 'delete-result success';
+                    resultDiv.innerHTML = `✅ ${data.message}`;
+                    // Refresh the list
+                    loadHistoryList();
+                } else if (res.status === 401) {
+                    logout();
+                } else {
+                    const err = await res.json();
+                    resultDiv.className = 'delete-result error';
+                    resultDiv.innerHTML = `❌ Error: ${err.error || 'Failed to delete'}`;
+                }
+            } catch (err) {
+                console.error("Error deleting history:", err);
+                resultDiv.className = 'delete-result error';
+                resultDiv.innerHTML = '❌ Network error';
+            }
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>
