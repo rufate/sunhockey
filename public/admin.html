@@ -632,6 +632,7 @@
         }
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -1453,7 +1454,14 @@
                         tr.innerHTML = `
                             <td>${p.firstName} ${p.lastName} ${goalieBadge}</td>
                             <td>${p.phone}</td>
-                            <td>${p.rating}/10</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    <input type="number" id="rating-${p.id}" value="${p.rating}" min="1" max="10" 
+                                        style="width:50px;padding:5px;background:#3d3d3d;border:1px solid #555;color:white;border-radius:3px;text-align:center;"
+                                        onchange="updateRating(${p.id}, this.value)">
+                                    <span>/10</span>
+                                </div>
+                            </td>
                             <td>${p.isGoalie ? 'N/A' : p.paymentMethod}</td>
                             <td>
                                 <button class="paid-btn ${paidClass}" onclick="togglePaid(${p.id})" ${p.isGoalie ? 'disabled' : ''}>
@@ -1592,6 +1600,39 @@
                 }
             } catch (err) {
                 console.error("Toggle paid error:", err);
+            }
+        }
+
+        async function updateRating(id, newRating) {
+            const ratingNum = parseInt(newRating);
+            if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 10) {
+                alert("Rating must be between 1 and 10");
+                loadData(); // Reload to reset the value
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/update-rating`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken: sessionToken, playerId: id, newRating: ratingNum })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log(`Updated ${data.player.firstName} ${data.player.lastName} rating to ${data.player.rating}`);
+                    // Don't reload data to avoid losing focus, just update the display
+                } else if (res.status === 401) {
+                    logout();
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + (err.error || "Failed to update rating"));
+                    loadData(); // Reload to reset
+                }
+            } catch (err) {
+                console.error("Update rating error:", err);
+                alert("Error updating rating");
+                loadData();
             }
         }
 
