@@ -1586,6 +1586,40 @@ app.post('/api/admin/toggle-paid', async (req, res) => {
     }
 });
 
+// NEW: Update player rating endpoint
+app.post('/api/admin/update-rating', async (req, res) => {
+    const { password, sessionToken, playerId, newRating } = req.body;
+
+    console.log('[UPDATE RATING] Request:', { playerId, newRating });
+
+    if (!adminSessions[sessionToken] && password !== ADMIN_PASSWORD) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    const ratingNum = parseInt(newRating);
+    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 10) {
+        return res.status(400).json({ error: "Rating must be a number between 1 and 10" });
+    }
+
+    const player = players.find(p => p.id === parseInt(playerId));
+    if (!player) {
+        return res.status(404).json({ error: "Player not found" });
+    }
+
+    const oldRating = player.rating;
+    player.rating = ratingNum;
+
+    try {
+        await pool.query('UPDATE players SET rating = $1 WHERE id = $2', [ratingNum, player.id]);
+        saveData();
+        console.log(`[UPDATE RATING] Updated ${player.firstName} ${player.lastName}: ${oldRating} -> ${ratingNum}`);
+        res.json({ success: true, player, oldRating, newRating: ratingNum });
+    } catch (err) {
+        console.error('[UPDATE RATING] Error:', err);
+        res.status(500).json({ error: "Database error" });
+    }
+});
+
 // --- FIXED: Manual roster release with guaranteed lock ---
 app.post('/api/admin/release-roster', async (req, res) => {
     const { password, sessionToken } = req.body;
